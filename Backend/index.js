@@ -1,14 +1,20 @@
 const express = require('express');
 const cors = require('cors');
+const {pool} = require('./database/config');
+const morgan = require('morgan');
 require('dotenv').config();
 
-//Servidor express
+// Servidor de express
 const app = express();
 app.use(cors());
-app.use(express.static('front'))
+// Morgan para consola
+app.use(morgan('dev'));
 app.use(express.json());
-app.listen(process.env.PORT, () => {
-  console.log(`Servidor corriendo en puerto ${process.env.PORT}`);
+
+// Puerto
+app.listen( process.env.DB_PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${process.env.DB_PORT}`);
 });
 
+//Rutas
 app.use("/api/auth", require("./routes/auth.routes"));

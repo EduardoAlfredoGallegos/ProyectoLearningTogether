@@ -1,95 +1,103 @@
-const Usuario = require("../models/user_model");
+const { pool } = require("../database/config");
 const bcrypt = require("bcryptjs");
-const { generarJWT } = require("../helpers/jwt");
+const { generateJWT } = require("../helpers/jwt");
 
-const crearUsuario = async (req, res) => {
-  const { nombre_usuario, correo, contrasena } = req.body;
+const registro = async (req, res) => {
   try {
-    //Verificacion email
-    let usuario = await Usuario.findByCorreo( correo );
-    if (usuario) {
-      return res.status(400).json({
-        ok: false,
-        mensaje: "El email ya esta registrado",
-      });
-    }
-    usuarioDB = new Usuario(req.body);
-    usuarioDB.puntaje=0;
-    //Encriptado de contrasena
-    const salt = bcrypt.genSaltSync();
-    usuarioDB.contrasena = bcrypt.hashSync(contrasena, salt);
-    //Generar JWT
-    const token = await generarJWT(usuarioDB.id, nombre_usuario);
-    //Crear usuario en la DB
-    console.log(usuarioDB);
-    await Usuario.create(usuarioDB);
-    return res.status(201).json({
-      ok: true,
-      id: usuarioDB.id,
-      nombre_usuario: usuarioDB.nombre_usuario,
-      token,
-    });
-    //Respuesta Exitosa
+    pool.query(
+      "SELECT * FROM usuario WHERE correo = ?",
+      [req.body.correo],
+      async (err, rows) => {
+        if (rows.length > 0) {
+          res.json({ text: "Usuario ya registrado" });
+        } else {
+          const email = req.body.email;
+          const token = await generateJWT(email);
+          const salt = bcrypt.genSaltSync();
+          req.body.contrasena = bcrypt.hashSync(req.body.contrasena, salt);
+          req.body.puntaje=0;
+          pool.query("INSERT INTO usuario set ?", [req.body]);
+          res.json({
+            ok: true,
+            text: "Registro correcto",
+            email: email,
+            token,
+            data: req.body,
+          });
+        }
+      }
+    );
   } catch (error) {
     console.log(error);
     return res.status(500).json({
       ok: false,
-      mensaje: "Vaya, un error",
+      Text: "Algo salió mal",
     });
   }
 };
 
-const loginUsuario = async (req, res) => {
-  const { email, contrasena } = req.body;
+const login = async (req, res) => {
   try {
-    //Verificar email
-    const usuarioDB = await Usuario.findByCorreo({email:email});
-    if (!usuarioDB) {
-      return res.status(400).json({
-        ok: false,
-        mensaje: "El email no encontrado",
-      });
-    }
-    //Verificar contrasena
-    const validacontra = bcrypt.compareSync(contrasena, usuarioDB.contrasena);
-    if (!validacontra) {
-      return res.status(400).json({
-        ok: false,
-        mensaje: "Contraseña invalida",
-      });
-    }
-    //Generar token
-    const token = await generarJWT(usuarioDB.id, usuarioDB.nombre);
-    //Respuesta login
-    return res.json({
-      ok: true,
-      id: usuarioDB.id,
-      nombre: usuarioDB.nombre,
-      token,
-      mensaje: "Login con /",
-    });
+    const correo = req.body.correo;
+    const token = await generateJWT(correo);
+    pool.query(
+      "SELECT * FROM usuario WHERE correo = ?",
+      [req.body.correo],
+      async (err, rows) => {
+        if (rows.length > 0) {
+          bcrypt.compare(
+            req.body.contrasena,
+            rows[0].contrasena,
+            function (err, ress) {
+              if (err) {
+                res.json({ ok: false, text: "" + err });
+              }
+              if (ress) {
+                res.json({
+                  ok: true,
+                  text: "Login correcto",
+                  correo: correo,
+                  token,
+                  data: rows[0],
+                });
+              } else {
+                res.json({
+                  ok: false,
+                  text: "Correo o contraseña incorrecta",
+                });
+              }
+            }
+          );
+        } else {
+          res.json({
+            ok: false,
+            text: "Correo o contraseña incorrecta",
+          });
+        }
+      }
+    );
   } catch (error) {
     console.log(error);
     return res.status(500).json({
       ok: false,
-      mensaje: "Error, contactate con el adm",
+      text: "Algo salio mal",
     });
   }
 };
 
-const validarToken = async (req, res) => {
-  const { uid, nombre } = req;
-  const token = await generarJWT(uid, nombre);
+const renuevaToken = async (req, res) => {
+  const correo = req.body.correo;
+  const token = await generateJWT(correo);
   return res.json({
     ok: true,
-    uid,
-    nombre,
+    text: "Validando token / Renovar token",
+    correo: correo,
     token,
-    mensaje: "Validando token con /tokenrenew"
   });
 };
+
 module.exports = {
-  crearUsuario,
-  loginUsuario,
-  validarToken,
+  renuevaToken,
+  registro,
+  login,
 };
