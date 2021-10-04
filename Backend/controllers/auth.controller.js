@@ -58,7 +58,11 @@ const login = async (req, res) => {
                   text: "Login correcto",
                   correo: correo,
                   token,
-                  data: rows[0],
+                  data: {
+                    nombre_usuario:rows[0].nombre_usuario,
+                    correo:rows[0].correo,
+                    puntaje:rows[0].puntaje
+                  },
                 });
               } else {
                 res.json({

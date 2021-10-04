@@ -18,3 +18,4 @@ app.listen( process.env.DB_PORT, () => {
 
 //Rutas
 app.use("/api/auth", require("./routes/auth.routes"));
+app.use("/api/", require("./routes/preguntas.routes"));
