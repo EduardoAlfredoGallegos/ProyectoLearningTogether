@@ -8,7 +8,11 @@ const {
 
 const router = Router();
 
-router.get("/pregunta/:dificultad", getPregunta);
+//GetPreegunta
+router.get("/pregunta/:dificultad/:topic", getPregunta);
+
+
+//Obtener opciones para la pregunta
 router.get("/ejercicio_audio/:id", getRespuestaAudio);
 router.get("/ejercicio_seleccion/:id", getRespuestaSeleccion);
 router.get("/ejercicio_escrito/:id", getRespuestaEscrita);

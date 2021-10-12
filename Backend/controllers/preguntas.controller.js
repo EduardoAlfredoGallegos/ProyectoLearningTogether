@@ -1,11 +1,11 @@
 const { pool } = require("../database/config");
 
 const getPregunta = async (req, res) => {
-  const { dificultad } = req.params;
+  const { dificultad, topic } = req.params;
   return new Promise((resolve, reject) => {
     pool.query(
-      "SELECT * FROM ejercicios WHERE dificultad = ?",
-      [dificultad],
+      "SELECT * FROM ejercicios WHERE dificultad = ? AND idtopic = ?",
+      [dificultad, topic],
       (err, rows) => {
         if (err) reject(err.message);
         if (rows.length > 0) {
