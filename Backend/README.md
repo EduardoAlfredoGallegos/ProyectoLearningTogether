@@ -15,3 +15,8 @@ npm install
 ## Import MySQL database
 
 The .sql file is located inside the "/database" folder
+
+# Start server
+```
+node index.js
+````
